@@ -1,0 +1,41 @@
+## .NET
+bin/
+obj/
+*.user
+*.userosscache
+*.suo
+*.cache
+*.dll
+*.exe
+*.pdb
+
+## Visual Studio
+.vs/
+*.sln.docstates
+launchSettings.json
+
+## Rider
+.idea/
+
+## VS Code
+.vscode/
+
+## Build
+[Bb]uild/
+[Dd]ebug/
+[Rr]elease/
+
+## NuGet
+*.nupkg
+packages/
+
+## Logs
+*.log
+logs/
+
+## User-specific
+appsettings.Development.json
+
+## OS
+Thumbs.db
+.DS_Store
