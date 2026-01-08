@@ -1,7 +1,105 @@
 ﻿@page "/"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@using GerenciamentoEstoque.Data
+@using Microsoft.AspNetCore.Components.Authorization
+@attribute [Authorize]
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject AuthenticationStateProvider AuthStateProvider
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Dashboard - GestãoEstoque</PageTitle>
 
-<h1>Hello, world!</h1>
+<div class="p-6">
+    <h1 class="text-xl font-bold text-gray-800 mb-6">Dashboard</h1>
+    
+    <!-- Cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div class="bg-white rounded-lg p-4 border border-gray-200">
+            <p class="text-sm text-gray-500 mb-1">Produtos</p>
+            <p class="text-2xl font-bold text-gray-800">@totalProdutos</p>
+        </div>
+        <div class="bg-white rounded-lg p-4 border border-gray-200">
+            <p class="text-sm text-gray-500 mb-1">Estoque Baixo</p>
+            <p class="text-2xl font-bold text-orange-600">@estoqueBaixo</p>
+        </div>
+        <div class="bg-white rounded-lg p-4 border border-gray-200">
+            <p class="text-sm text-gray-500 mb-1">Vendas Hoje</p>
+            <p class="text-2xl font-bold text-green-600">R$ @vendasHoje.ToString("N2")</p>
+        </div>
+        <div class="bg-white rounded-lg p-4 border border-gray-200">
+            <p class="text-sm text-gray-500 mb-1">Movimentações</p>
+            <p class="text-2xl font-bold text-gray-800">@totalMovimentacoes</p>
+        </div>
+    </div>
 
-Welcome to your new app.
+    <!-- Últimas Movimentações -->
+    <div class="bg-white rounded-lg border border-gray-200">
+        <div class="px-4 py-3 border-b border-gray-200">
+            <h2 class="font-semibold text-gray-800">Últimas Movimentações</h2>
+        </div>
+        <div class="p-4">
+            @if (!movimentacoesRecentes.Any())
+            {
+                <p class="text-gray-500 text-sm">Nenhuma movimentação registrada.</p>
+            }
+            else
+            {
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="text-left text-gray-500 border-b">
+                            <th class="pb-2">Produto</th>
+                            <th class="pb-2">Tipo</th>
+                            <th class="pb-2 text-right">Qtd</th>
+                            <th class="pb-2 text-right">Data</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var mov in movimentacoesRecentes)
+                        {
+                            <tr class="border-b border-gray-100">
+                                <td class="py-2 text-gray-800">@mov.Produto?.Nome</td>
+                                <td class="py-2">
+                                    <span class="@(mov.TipoMovimentacao == GerenciamentoEstoque.Enums.TipoMovimentacao.Entrada ? "text-green-600" : "text-red-600")">
+                                        @mov.TipoMovimentacao
+                                    </span>
+                                </td>
+                                <td class="py-2 text-right text-gray-800">@mov.Quantidade</td>
+                                <td class="py-2 text-right text-gray-500">@mov.DataMovimentacao.ToString("dd/MM HH:mm")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private int totalProdutos = 0;
+    private int estoqueBaixo = 0;
+    private decimal vendasHoje = 0;
+    private int totalMovimentacoes = 0;
+    private List<Models.MovimentacaoEstoque> movimentacoesRecentes = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        
+        totalProdutos = await context.Produtos.CountAsync();
+        estoqueBaixo = await context.Estoques.CountAsync(e => e.QuantidadeAtual <= e.QuantidadeMinima);
+        
+        var hoje = DateTime.Today;
+        vendasHoje = await context.Vendas
+            .Where(v => v.DataVenda >= hoje)
+            .SumAsync(v => (decimal?)v.ValorTotal) ?? 0;
+            
+        totalMovimentacoes = await context.MovimentacoesEstoque
+            .CountAsync(m => m.DataMovimentacao >= DateTime.Now.AddDays(-7));
+
+        movimentacoesRecentes = await context.MovimentacoesEstoque
+            .Include(m => m.Produto)
+            .OrderByDescending(m => m.DataMovimentacao)
+            .Take(5)
+            .ToListAsync();
+    }
+}

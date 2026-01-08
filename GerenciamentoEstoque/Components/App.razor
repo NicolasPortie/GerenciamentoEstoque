@@ -1,19 +1,35 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
-    <link rel="stylesheet" href="@Assets["lib/bootstrap/dist/css/bootstrap.min.css"]" />
-    <link rel="stylesheet" href="@Assets["app.css"]" />
-    <link rel="stylesheet" href="@Assets["GerenciamentoEstoque.styles.css"]" />
-    <ImportMap />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1e3c66",
+                        "primary-hover": "#162d4d",
+                        "accent": "#5AB9C1",
+                        "background-light": "#f7f7f8",
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="app.css" />
+    <link rel="stylesheet" href="GerenciamentoEstoque.styles.css" />
     <link rel="icon" type="image/png" href="favicon.png" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <title>Gerenciamento de Estoque</title>
     <HeadOutlet @rendermode="InteractiveServer" />
 </head>
 
-<body>
+<body class="antialiased">
     <Routes @rendermode="InteractiveServer" />
     <script src="_framework/blazor.web.js"></script>
 </body>

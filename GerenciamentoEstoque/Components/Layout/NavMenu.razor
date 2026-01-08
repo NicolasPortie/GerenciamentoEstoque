@@ -1,30 +1,48 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">GerenciamentoEstoque</a>
+﻿<div class="flex h-full flex-col bg-white">
+    <div class="h-14 flex items-center px-4 border-b border-gray-200">
+        <span class="font-bold text-gray-800">Gestao de Estoque</span>
     </div>
-</div>
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+    <nav class="flex-1 p-2">
+        <NavLink class="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-gray-100 text-gray-700" href="" Match="NavLinkMatch.All">
+            Dashboard
+        </NavLink>
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
+        <div class="text-xs text-gray-400 px-3 mt-4 mb-2">Operacoes</div>
+        
+        <NavLink class="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-gray-100 text-gray-700" href="vendas">
+            Vendas
+        </NavLink>
+        <NavLink class="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-gray-100 text-gray-700" href="compras">
+            Compras
+        </NavLink>
+        <NavLink class="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-gray-100 text-gray-700" href="estoque">
+            Estoque
+        </NavLink>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
+        <div class="text-xs text-gray-400 px-3 mt-4 mb-2">Cadastros</div>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div>
+        <NavLink class="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-gray-100 text-gray-700" href="produtos">
+            Produtos
+        </NavLink>
+        <NavLink class="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-gray-100 text-gray-700" href="clientes">
+            Clientes
+        </NavLink>
+        <NavLink class="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-gray-100 text-gray-700" href="fornecedores">
+            Fornecedores
+        </NavLink>
+
+        <div class="text-xs text-gray-400 px-3 mt-4 mb-2">Sistema</div>
+
+        <NavLink class="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-gray-100 text-gray-700" href="usuarios">
+            Usuarios
+        </NavLink>
     </nav>
+
+    <div class="p-2 border-t border-gray-200">
+        <a href="/conta/sair" class="flex items-center justify-center gap-2 px-3 py-2 text-sm rounded hover:bg-gray-100 text-gray-600">
+            Sair
+        </a>
+    </div>
 </div>
 
