@@ -9,62 +9,120 @@
 
 <PageTitle>Dashboard - GestãoEstoque</PageTitle>
 
-<div class="p-6">
-    <h1 class="text-xl font-bold text-gray-800 mb-6">Dashboard</h1>
+<div class="space-y-6">
+    <div class="flex items-center justify-between border-b border-gray-200 pb-4">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Painel de Controle</h1>
+            <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider mt-1">Status operacional do estoque</p>
+        </div>
+        <div class="flex gap-2">
+            <button class="bg-primary text-white px-4 py-2 rounded font-bold text-xs hover:bg-primary-hover transition-colors flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">add</span>
+                Novo Registro
+            </button>
+        </div>
+    </div>
     
-    <!-- Cards -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div class="bg-white rounded-lg p-4 border border-gray-200">
-            <p class="text-sm text-gray-500 mb-1">Produtos</p>
-            <p class="text-2xl font-bold text-gray-800">@totalProdutos</p>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-0 border border-gray-200 bg-white">
+        <div class="p-6 border-r border-gray-100 relative overflow-hidden group">
+            <div class="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
+            <div class="flex flex-col">
+                <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total em Catálogo</span>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-3xl font-black text-gray-900">@totalProdutos</span>
+                    <span class="text-[10px] font-bold text-gray-400 uppercase">Produtos</span>
+                </div>
+            </div>
+            <span class="material-symbols-outlined absolute right-4 bottom-4 text-4xl text-gray-50 opacity-10 group-hover:opacity-20 transition-opacity">inventory_2</span>
         </div>
-        <div class="bg-white rounded-lg p-4 border border-gray-200">
-            <p class="text-sm text-gray-500 mb-1">Estoque Baixo</p>
-            <p class="text-2xl font-bold text-orange-600">@estoqueBaixo</p>
+
+        <div class="p-6 border-r border-gray-100 relative overflow-hidden group">
+            <div class="absolute left-0 top-0 bottom-0 w-1 bg-orange-500"></div>
+            <div class="flex flex-col">
+                <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Alertas de Reposição</span>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-3xl font-black text-orange-600">@estoqueBaixo</span>
+                    <span class="text-[10px] font-bold text-orange-400 uppercase">Crítico</span>
+                </div>
+            </div>
+            <span class="material-symbols-outlined absolute right-4 bottom-4 text-4xl text-gray-50 opacity-10 group-hover:opacity-20 transition-opacity">warning</span>
         </div>
-        <div class="bg-white rounded-lg p-4 border border-gray-200">
-            <p class="text-sm text-gray-500 mb-1">Vendas Hoje</p>
-            <p class="text-2xl font-bold text-green-600">R$ @vendasHoje.ToString("N2")</p>
+
+        <div class="p-6 border-r border-gray-100 relative overflow-hidden group">
+            <div class="absolute left-0 top-0 bottom-0 w-1 bg-green-500"></div>
+            <div class="flex flex-col">
+                <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Receita Mensal (Hoje)</span>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-3xl font-black text-gray-900">@vendasHoje.ToString("C2")</span>
+                </div>
+            </div>
+            <span class="material-symbols-outlined absolute right-4 bottom-4 text-4xl text-gray-50 opacity-10 group-hover:opacity-20 transition-opacity">payments</span>
         </div>
-        <div class="bg-white rounded-lg p-4 border border-gray-200">
-            <p class="text-sm text-gray-500 mb-1">Movimentações</p>
-            <p class="text-2xl font-bold text-gray-800">@totalMovimentacoes</p>
+
+        <div class="p-6 relative overflow-hidden group">
+            <div class="absolute left-0 top-0 bottom-0 w-1 bg-accent"></div>
+            <div class="flex flex-col">
+                <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Giro de Estoque</span>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-3xl font-black text-gray-900">@totalMovimentacoes</span>
+                    <span class="text-[10px] font-bold text-gray-400 uppercase">Operações</span>
+                </div>
+            </div>
+            <span class="material-symbols-outlined absolute right-4 bottom-4 text-4xl text-gray-50 opacity-10 group-hover:opacity-20 transition-opacity">sync_alt</span>
         </div>
     </div>
 
-    <!-- Últimas Movimentações -->
-    <div class="bg-white rounded-lg border border-gray-200">
-        <div class="px-4 py-3 border-b border-gray-200">
-            <h2 class="font-semibold text-gray-800">Últimas Movimentações</h2>
+    <!-- Tabela de Movimentações -->
+    <div class="bg-white border border-gray-200 shadow-sm">
+        <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-gray-50">
+            <h2 class="text-sm font-bold text-gray-800 flex items-center gap-2 uppercase">
+                <span class="material-symbols-outlined text-lg text-primary">history</span>
+                Histórico de Entradas e Saídas
+            </h2>
+            <a href="/movimentacoes" class="text-primary text-xs font-bold hover:bg-gray-100 py-1.5 px-3 border border-gray-200 rounded transition-colors bg-white">Ver Tudo</a>
         </div>
-        <div class="p-4">
+        <div class="overflow-x-auto">
             @if (!movimentacoesRecentes.Any())
             {
-                <p class="text-gray-500 text-sm">Nenhuma movimentação registrada.</p>
+                <div class="p-16 text-center">
+                    <span class="material-symbols-outlined text-4xl text-gray-200 mb-2">database_off</span>
+                    <p class="text-gray-400 text-sm font-medium">Nenhum registro de movimentação foi localizado.</p>
+                </div>
             }
             else
             {
-                <table class="w-full text-sm">
+                <table class="w-full text-left text-sm">
                     <thead>
-                        <tr class="text-left text-gray-500 border-b">
-                            <th class="pb-2">Produto</th>
-                            <th class="pb-2">Tipo</th>
-                            <th class="pb-2 text-right">Qtd</th>
-                            <th class="pb-2 text-right">Data</th>
+                        <tr class="bg-gray-100/50 text-gray-600 border-b border-gray-200">
+                            <th class="px-6 py-4 font-bold uppercase text-[10px] tracking-wider">Produto</th>
+                            <th class="px-6 py-4 font-bold uppercase text-[10px] tracking-wider">Ação Realizada</th>
+                            <th class="px-6 py-4 font-bold uppercase text-[10px] tracking-wider text-right">Qtd. Movimentada</th>
+                            <th class="px-6 py-4 font-bold uppercase text-[10px] tracking-wider text-right">Data/Hora</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody class="divide-y divide-gray-100">
                         @foreach (var mov in movimentacoesRecentes)
                         {
-                            <tr class="border-b border-gray-100">
-                                <td class="py-2 text-gray-800">@mov.Produto?.Nome</td>
-                                <td class="py-2">
-                                    <span class="@(mov.TipoMovimentacao == GerenciamentoEstoque.Enums.TipoMovimentacao.Entrada ? "text-green-600" : "text-red-600")">
-                                        @mov.TipoMovimentacao
-                                    </span>
+                            <tr class="hover:bg-blue-50/30 transition-colors">
+                                <td class="px-6 py-4 font-bold text-gray-700">@mov.Produto?.Nome</td>
+                                <td class="px-6 py-4">
+                                    @if (mov.TipoMovimentacao == GerenciamentoEstoque.Enums.TipoMovimentacao.Entrada)
+                                    {
+                                        <div class="flex items-center gap-1.5 text-green-600 font-bold text-[11px]">
+                                            <span class="material-symbols-outlined text-sm">arrow_downward</span>
+                                            ENTRADA NO ESTOQUE
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="flex items-center gap-1.5 text-rose-600 font-bold text-[11px]">
+                                            <span class="material-symbols-outlined text-sm">arrow_upward</span>
+                                            SAÍDA / VENDA
+                                        </div>
+                                    }
                                 </td>
-                                <td class="py-2 text-right text-gray-800">@mov.Quantidade</td>
-                                <td class="py-2 text-right text-gray-500">@mov.DataMovimentacao.ToString("dd/MM HH:mm")</td>
+                                <td class="px-6 py-4 text-right font-mono font-bold text-gray-900 border-r border-gray-50">@mov.Quantidade</td>
+                                <td class="px-6 py-4 text-right text-gray-500 font-medium">@mov.DataMovimentacao.ToString("dd/MM/yyyy HH:mm")</td>
                             </tr>
                         }
                     </tbody>

@@ -1,20 +1,48 @@
 ﻿@inherits LayoutComponentBase
 
-<div class="flex h-screen bg-gray-100">
-    <aside class="w-56 border-r border-gray-200 flex-shrink-0">
-        <NavMenu />
+<div class="flex h-screen bg-background-light font-['Inter']">
+    <aside class="@(_sidebarOpen ? "w-64" : "w-0") flex-shrink-0 z-20 transition-all duration-300 overflow-hidden border-r border-gray-200">
+        <div class="w-64 h-full">
+            <NavMenu />
+        </div>
     </aside>
 
-    <div class="flex-1 flex flex-col overflow-hidden">
-        <header class="h-14 bg-white border-b border-gray-200 flex items-center justify-end px-4">
-            <span class="text-sm text-gray-600">Admin</span>
+    <div class="flex-1 flex flex-col overflow-hidden relative">
+        <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8 z-10">
+            <div class="flex items-center gap-4">
+                <button type="button" class="p-2 -ml-2 rounded-md hover:bg-gray-100 text-gray-500 hover:text-primary transition-all active:scale-95" @onclick="ToggleSidebar">
+                    <span class="material-symbols-outlined text-2xl block">menu</span>
+                </button>
+                <div class="h-6 w-[1px] bg-gray-200"></div>
+            </div>
+            
+            <div class="flex items-center gap-6">
+                <div class="flex items-center gap-3">
+                    <div class="flex flex-col items-end hidden sm:flex">
+                        <span class="text-xs font-bold text-gray-800">Administrador</span>
+                        <span class="text-[10px] text-green-600 font-bold uppercase">Online</span>
+                    </div>
+                    <div class="h-10 w-10 rounded bg-primary flex items-center justify-center text-white font-black text-sm shadow-sm border border-primary-hover">
+                        AD
+                    </div>
+                </div>
+            </div>
         </header>
 
-        <main class="flex-1 overflow-y-auto">
+        <main class="flex-1 overflow-y-auto p-6 bg-[#f8f9fa]">
             @Body
         </main>
     </div>
 </div>
+
+@code {
+    private bool _sidebarOpen = true;
+
+    private void ToggleSidebar()
+    {
+        _sidebarOpen = !_sidebarOpen;
+    }
+}
 
 <div id="blazor-error-ui" class="fixed bottom-0 left-0 right-0 hidden bg-red-600 p-4 text-white" data-nosnippet>
     Ocorreu um erro.

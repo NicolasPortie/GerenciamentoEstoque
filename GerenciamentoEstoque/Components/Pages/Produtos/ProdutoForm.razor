@@ -1,0 +1,531 @@
+@page "/produtos/novo"
+@page "/produtos/editar/{Id:int}"
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.EntityFrameworkCore
+@using GerenciamentoEstoque.Models
+@using GerenciamentoEstoque.Data
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthStateProvider
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@using System.Globalization
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+
+<div class="mb-8">
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-2xl font-extrabold text-gray-800 tracking-tight">@(Id == 0 ? "Novo Produto" : "Editar Produto")</h1>
+            <p class="text-sm text-gray-500">Preencha as informações para catalogar seu item.</p>
+        </div>
+        <button @onclick="Voltar" class="flex items-center gap-2 text-gray-400 hover:text-gray-600 font-semibold text-sm transition-colors">
+            <span class="material-symbols-outlined text-lg">close</span>
+            Cancelar
+        </button>
+    </div>
+
+    @if (carregando)
+    {
+        <div class="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-gray-100 shadow-sm">
+            <div class="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+            <p class="text-gray-400 font-medium">Carregando dados...</p>
+        </div>
+    }
+    else
+    {
+        <EditForm Model="produto" OnValidSubmit="Salvar">
+            <DataAnnotationsValidator />
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Informações Principais -->
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm space-y-6">
+                        <div class="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-widest mb-2">
+                            <span class="material-symbols-outlined text-lg">info</span>
+                            Informações Básicas
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Nome do Produto</label>
+                                <InputText @bind-Value="produto.Nome" placeholder="Ex: Arroz Integral 5kg" class="w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-primary/20 transition-all text-sm outline-none font-semibold text-gray-700 placeholder:text-gray-300" />
+                                <ValidationMessage For="@(() => produto.Nome)" class="text-rose-500 text-[10px] font-bold mt-1 uppercase tracking-tighter" />
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">SKU / Código</label>
+                                <InputText @bind-Value="produto.CodigoInterno" placeholder="Gerado automaticamente" class="w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-primary/20 transition-all text-sm outline-none font-mono" />
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Código de Barras</label>
+                                <InputText @bind-Value="produto.CodigoBarras" placeholder="EAN13" class="w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-primary/20 transition-all text-sm outline-none font-mono" />
+                            </div>
+
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Descrição Curta</label>
+                                <InputTextArea @bind-Value="produto.Descricao" rows="3" placeholder="Detalhes técnicos, marca, peso..." class="w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-primary/20 transition-all text-sm outline-none resize-none" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm space-y-6">
+                        <div class="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-widest mb-2">
+                            <span class="material-symbols-outlined text-lg">payments</span>
+                            Precificação
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Preço de Custo</label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                        <span class="text-gray-400 text-xs font-bold uppercase">R$</span>
+                                    </div>
+                                    <input value="@precoCustoTexto"
+                                           @oninput="OnPrecoCustoInput"
+                                           inputmode="numeric"
+                                           autocomplete="off"
+                                           class="w-full pl-12 pr-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-primary/20 transition-all text-sm outline-none font-mono font-bold text-gray-700" />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Preço de Venda</label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                        <span class="text-gray-400 text-xs font-bold uppercase">R$</span>
+                                    </div>
+                                    <input value="@precoVendaTexto"
+                                           @oninput="OnPrecoVendaInput"
+                                           inputmode="numeric"
+                                           autocomplete="off"
+                                           class="w-full pl-12 pr-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-primary/20 transition-all text-sm outline-none font-mono font-bold text-primary" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar do Form -->
+                <div class="space-y-6">
+                    <div class="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm space-y-6">
+                        <div class="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-widest mb-2">
+                            <span class="material-symbols-outlined text-lg">inventory</span>
+                            Classificação
+                        </div>
+                        
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Categoria</label>
+                            <div class="flex items-stretch gap-2">
+                                <InputSelect @bind-Value="produto.CategoriaId" class="w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-primary/20 transition-all text-sm outline-none font-semibold text-gray-700">
+                                    <option value="0">Selecionar...</option>
+                                    @foreach (var cat in categorias)
+                                    {
+                                        <option value="@cat.CategoriaId">@cat.Nome</option>
+                                    }
+                                </InputSelect>
+                                <button type="button" @onclick="AbrirModalCategoriaRapida" class="px-3 bg-gray-50 rounded-xl border border-gray-100 text-gray-400 hover:text-primary hover:border-primary/20 transition-colors" title="Cadastrar categoria">
+                                    <span class="material-symbols-outlined text-[18px]">add</span>
+                                </button>
+                            </div>
+                            <ValidationMessage For="@(() => produto.CategoriaId)" class="text-rose-500 text-[10px] font-bold mt-1 uppercase tracking-tighter" />
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Marca</label>
+                            <div class="flex items-stretch gap-2">
+                                <InputSelect @bind-Value="produto.MarcaId" class="w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-primary/20 transition-all text-sm outline-none">
+                                    <option value="0">Selecionar...</option>
+                                    @foreach (var marc in marcas)
+                                    {
+                                        <option value="@marc.MarcaId">@marc.Nome</option>
+                                    }
+                                </InputSelect>
+                                <button type="button" @onclick="AbrirModalMarcaRapida" class="px-3 bg-gray-50 rounded-xl border border-gray-100 text-gray-400 hover:text-primary hover:border-primary/20 transition-colors" title="Cadastrar marca">
+                                    <span class="material-symbols-outlined text-[18px]">add</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Unidade</label>
+                            <div class="flex items-stretch gap-2">
+                                <InputSelect @bind-Value="produto.UnidadeMedidaId" class="w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-primary/20 transition-all text-sm outline-none">
+                                    <option value="0">Selecionar...</option>
+                                    @foreach (var un in unidades)
+                                    {
+                                        <option value="@un.UnidadeMedidaId">@un.Sigla - @un.Nome</option>
+                                    }
+                                </InputSelect>
+                                <button type="button" @onclick="AbrirModalUnidadeRapida" class="px-3 bg-gray-50 rounded-xl border border-gray-100 text-gray-400 hover:text-primary hover:border-primary/20 transition-colors" title="Cadastrar unidade">
+                                    <span class="material-symbols-outlined text-[18px]">add</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (Id == 0)
+                    {
+                        <div class="bg-orange-50 rounded-2xl border border-orange-100 p-6 space-y-4">
+                            <div class="flex items-center gap-2 text-orange-700 font-bold text-xs uppercase tracking-widest">
+                                <span class="material-symbols-outlined text-lg">priority_high</span>
+                                Estoque Inicial
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-orange-400 uppercase mb-1">Qtd Atual</label>
+                                    <input type="number" step="0.01" @bind="qtdInicial" class="w-full px-3 py-2 bg-white/50 border-none rounded-lg text-sm outline-none font-mono font-bold focus:ring-1 focus:ring-orange-200" />
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-orange-400 uppercase mb-1">Mínimo</label>
+                                    <input type="number" step="0.01" @bind="qtdMinima" class="w-full px-3 py-2 bg-white/50 border-none rounded-lg text-sm outline-none font-mono font-bold focus:ring-1 focus:ring-orange-200" />
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <div class="pt-4">
+                        <button type="submit" class="w-full bg-primary text-white py-4 rounded-2xl font-bold text-sm shadow-xl shadow-primary/20 hover:bg-primary-hover hover:-translate-y-0.5 transition-all active:scale-95 flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined">save</span>
+                            @(Id == 0 ? "Cadastrar Produto" : "Salvar Alterações")
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </EditForm>
+    }
+</div>
+
+@if (exibirModalMarcaRapida)
+{
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+        <div class="bg-white w-full max-w-md shadow-2xl border border-gray-200">
+            <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                <h3 class="text-sm font-black text-gray-900 uppercase tracking-widest flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">branding_watermark</span>
+                    Nova Marca
+                </h3>
+                <button type="button" @onclick="FecharModalMarcaRapida" class="text-gray-400 hover:text-gray-600">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <EditForm Model="marcaRapida" OnValidSubmit="SalvarMarcaRapida">
+                <DataAnnotationsValidator />
+                <div class="p-6 space-y-4">
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Nome da Marca</label>
+                        <InputText @bind-Value="marcaRapida.Nome" class="w-full px-4 py-3 bg-gray-100 border-none rounded text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary/20 transition-all outline-none" placeholder="Ex: Dell, Samsung..." />
+                        <ValidationMessage For="@(() => marcaRapida.Nome)" class="text-rose-600 text-[10px] font-bold uppercase" />
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+                    <button type="button" @onclick="FecharModalMarcaRapida" class="px-4 py-2 text-xs font-black text-gray-400 uppercase hover:text-gray-600 transition-colors">Cancelar</button>
+                    <button type="submit" class="bg-primary text-white px-6 py-2 rounded text-xs font-black uppercase tracking-widest hover:bg-primary-hover shadow-lg shadow-primary/20 transition-all active:scale-95">Confirmar</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@if (exibirModalUnidadeRapida)
+{
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+        <div class="bg-white w-full max-w-md shadow-2xl border border-gray-200">
+            <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                <h3 class="text-sm font-black text-gray-900 uppercase tracking-widest flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">straighten</span>
+                    Nova Unidade
+                </h3>
+                <button type="button" @onclick="FecharModalUnidadeRapida" class="text-gray-400 hover:text-gray-600">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <EditForm Model="unidadeRapida" OnValidSubmit="SalvarUnidadeRapida">
+                <DataAnnotationsValidator />
+                <div class="p-6 space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="sm:col-span-1 space-y-1.5">
+                            <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Sigla</label>
+                            <InputText @bind-Value="unidadeRapida.Sigla" class="w-full px-4 py-3 bg-gray-100 border-none rounded text-sm font-black uppercase text-gray-700 focus:ring-2 focus:ring-primary/20 transition-all outline-none" placeholder="UN" />
+                            <ValidationMessage For="@(() => unidadeRapida.Sigla)" class="text-rose-600 text-[10px] font-bold uppercase" />
+                        </div>
+                        <div class="sm:col-span-2 space-y-1.5">
+                            <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Nome</label>
+                            <InputText @bind-Value="unidadeRapida.Nome" class="w-full px-4 py-3 bg-gray-100 border-none rounded text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary/20 transition-all outline-none" placeholder="Ex: Unidade, Caixa..." />
+                            <ValidationMessage For="@(() => unidadeRapida.Nome)" class="text-rose-600 text-[10px] font-bold uppercase" />
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+                    <button type="button" @onclick="FecharModalUnidadeRapida" class="px-4 py-2 text-xs font-black text-gray-400 uppercase hover:text-gray-600 transition-colors">Cancelar</button>
+                    <button type="submit" class="bg-primary text-white px-6 py-2 rounded text-xs font-black uppercase tracking-widest hover:bg-primary-hover shadow-lg shadow-primary/20 transition-all active:scale-95">Confirmar</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@if (exibirModalCategoriaRapida)
+{
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+        <div class="bg-white w-full max-w-md shadow-2xl border border-gray-200">
+            <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                <h3 class="text-sm font-black text-gray-900 uppercase tracking-widest flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">category</span>
+                    Nova Categoria
+                </h3>
+                <button type="button" @onclick="FecharModalCategoriaRapida" class="text-gray-400 hover:text-gray-600">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <EditForm Model="categoriaRapida" OnValidSubmit="SalvarCategoriaRapida">
+                <DataAnnotationsValidator />
+                <div class="p-6 space-y-4">
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Nome da Categoria</label>
+                        <InputText @bind-Value="categoriaRapida.Nome" class="w-full px-4 py-3 bg-gray-100 border-none rounded text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary/20 transition-all outline-none" placeholder="Ex: Higiene, Bebidas..." />
+                        <ValidationMessage For="@(() => categoriaRapida.Nome)" class="text-rose-600 text-[10px] font-bold uppercase" />
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+                    <button type="button" @onclick="FecharModalCategoriaRapida" class="px-4 py-2 text-xs font-black text-gray-400 uppercase hover:text-gray-600 transition-colors">Cancelar</button>
+                    <button type="submit" class="bg-primary text-white px-6 py-2 rounded text-xs font-black uppercase tracking-widest hover:bg-primary-hover shadow-lg shadow-primary/20 transition-all active:scale-95">Confirmar</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+    
+    private Produto produto = new() { Ativo = true };
+    private List<Categoria> categorias = new();
+    private List<Marca> marcas = new();
+    private List<UnidadeMedida> unidades = new();
+
+    private static readonly CultureInfo PtBr = CultureInfo.GetCultureInfo("pt-BR");
+    private string precoCustoTexto = string.Empty;
+    private string precoVendaTexto = string.Empty;
+    
+    private decimal qtdInicial = 0;
+    private decimal qtdMinima = 0;
+    private bool carregando = true;
+
+    private bool exibirModalMarcaRapida = false;
+    private bool exibirModalUnidadeRapida = false;
+    private bool exibirModalCategoriaRapida = false;
+    private Marca marcaRapida = new() { Ativo = true };
+    private UnidadeMedida unidadeRapida = new() { Ativo = true };
+    private Categoria categoriaRapida = new() { Ativo = true };
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        
+        categorias = await context.Categorias.Where(c => c.Ativo).OrderBy(c => c.Nome).ToListAsync();
+        marcas = await context.Marcas.Where(m => m.Ativo).OrderBy(m => m.Nome).ToListAsync();
+        unidades = await context.UnidadesMedida.Where(u => u.Ativo).OrderBy(u => u.Nome).ToListAsync();
+
+        if (Id != 0)
+        {
+            var p = await context.Produtos
+                .Include(p => p.Estoque)
+                .FirstOrDefaultAsync(p => p.ProdutoId == Id);
+                
+            if (p != null)
+            {
+                produto = p;
+            }
+            else
+            {
+                Nav.NavigateTo("/produtos");
+            }
+        }
+        else
+        {
+            if (categorias.Any() && produto.CategoriaId == 0) produto.CategoriaId = categorias.First().CategoriaId;
+            if (marcas.Any()) produto.MarcaId = marcas.First().MarcaId;
+            if (unidades.Any()) produto.UnidadeMedidaId = unidades.First().UnidadeMedidaId;
+        }
+
+        SincronizarPrecosTexto();
+
+        carregando = false;
+    }
+
+    private void AbrirModalMarcaRapida()
+    {
+        marcaRapida = new Marca() { Ativo = true };
+        exibirModalMarcaRapida = true;
+    }
+
+    private void FecharModalMarcaRapida()
+    {
+        exibirModalMarcaRapida = false;
+    }
+
+    private async Task SalvarMarcaRapida()
+    {
+        using var context = DbFactory.CreateDbContext();
+        marcaRapida.Ativo = true;
+        marcaRapida.DataCadastro = DateTime.Now;
+        context.Marcas.Add(marcaRapida);
+        await context.SaveChangesAsync();
+
+        marcas = await context.Marcas.Where(m => m.Ativo).OrderBy(m => m.Nome).ToListAsync();
+        produto.MarcaId = marcaRapida.MarcaId;
+        exibirModalMarcaRapida = false;
+    }
+
+    private void AbrirModalUnidadeRapida()
+    {
+        unidadeRapida = new UnidadeMedida() { Ativo = true };
+        exibirModalUnidadeRapida = true;
+    }
+
+    private void FecharModalUnidadeRapida()
+    {
+        exibirModalUnidadeRapida = false;
+    }
+
+    private async Task SalvarUnidadeRapida()
+    {
+        using var context = DbFactory.CreateDbContext();
+        unidadeRapida.Ativo = true;
+        unidadeRapida.DataCadastro = DateTime.Now;
+        unidadeRapida.Sigla = (unidadeRapida.Sigla ?? string.Empty).Trim().ToUpperInvariant();
+        context.UnidadesMedida.Add(unidadeRapida);
+        await context.SaveChangesAsync();
+
+        unidades = await context.UnidadesMedida.Where(u => u.Ativo).OrderBy(u => u.Nome).ToListAsync();
+        produto.UnidadeMedidaId = unidadeRapida.UnidadeMedidaId;
+        exibirModalUnidadeRapida = false;
+    }
+
+    private void AbrirModalCategoriaRapida()
+    {
+        categoriaRapida = new Categoria() { Ativo = true };
+        exibirModalCategoriaRapida = true;
+    }
+
+    private void FecharModalCategoriaRapida()
+    {
+        exibirModalCategoriaRapida = false;
+    }
+
+    private async Task SalvarCategoriaRapida()
+    {
+        using var context = DbFactory.CreateDbContext();
+        categoriaRapida.Ativo = true;
+        categoriaRapida.DataCadastro = DateTime.Now;
+        context.Categorias.Add(categoriaRapida);
+        await context.SaveChangesAsync();
+
+        categorias = await context.Categorias.Where(c => c.Ativo).OrderBy(c => c.Nome).ToListAsync();
+        produto.CategoriaId = categoriaRapida.CategoriaId;
+        exibirModalCategoriaRapida = false;
+    }
+
+    private void SincronizarPrecosTexto()
+    {
+        precoCustoTexto = produto.PrecoCusto == 0 ? string.Empty : produto.PrecoCusto.ToString("N2", PtBr);
+        precoVendaTexto = produto.PrecoVenda == 0 ? string.Empty : produto.PrecoVenda.ToString("N2", PtBr);
+    }
+
+    private void OnPrecoCustoInput(ChangeEventArgs e)
+    {
+        precoCustoTexto = FormatarMoedaDigitada(e.Value?.ToString());
+        produto.PrecoCusto = ParseMoedaPtBr(precoCustoTexto);
+    }
+
+    private void OnPrecoVendaInput(ChangeEventArgs e)
+    {
+        precoVendaTexto = FormatarMoedaDigitada(e.Value?.ToString());
+        produto.PrecoVenda = ParseMoedaPtBr(precoVendaTexto);
+    }
+
+    private static string FormatarMoedaDigitada(string? valor)
+    {
+        var digits = new string((valor ?? string.Empty).Where(char.IsDigit).ToArray());
+        if (digits.Length == 0)
+            return string.Empty;
+
+        if (digits.Length > 15)
+            digits = digits[..15];
+
+        if (!long.TryParse(digits, out var cents))
+            return string.Empty;
+
+        var dec = cents / 100m;
+        return dec.ToString("N2", PtBr);
+    }
+
+    private static decimal ParseMoedaPtBr(string? valor)
+    {
+        if (string.IsNullOrWhiteSpace(valor))
+            return 0m;
+
+        return decimal.TryParse(valor, NumberStyles.Number, PtBr, out var parsed) ? parsed : 0m;
+    }
+
+    private async Task Salvar()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        var usuarioIdStr = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        
+        if (string.IsNullOrEmpty(usuarioIdStr) || !int.TryParse(usuarioIdStr, out int usuarioId))
+            return;
+
+        using var context = DbFactory.CreateDbContext();
+
+        if (Id == 0)
+        {
+            produto.DataCadastro = DateTime.Now;
+            context.Produtos.Add(produto);
+            await context.SaveChangesAsync();
+
+            if (string.IsNullOrWhiteSpace(produto.CodigoInterno))
+            {
+                produto.CodigoInterno = "PRD-" + produto.ProdutoId.ToString().PadLeft(5, '0');
+                await context.SaveChangesAsync();
+            }
+
+            var estoque = new Estoque
+            {
+                ProdutoId = produto.ProdutoId,
+                QuantidadeAtual = qtdInicial,
+                QuantidadeMinima = qtdMinima,
+                DataAtualizacao = DateTime.Now
+            };
+            context.Estoques.Add(estoque);
+
+            if (qtdInicial > 0)
+            {
+                var mov = new MovimentacaoEstoque
+                {
+                    ProdutoId = produto.ProdutoId,
+                    TipoMovimentacao = Enums.TipoMovimentacao.Entrada,
+                    Quantidade = qtdInicial,
+                    DataMovimentacao = DateTime.Now,
+                    UsuarioId = usuarioId,
+                    Observacao = "Saldo inicial no cadastro"
+                };
+                context.MovimentacoesEstoque.Add(mov);
+            }
+        }
+        else
+        {
+            context.Produtos.Update(produto);
+        }
+
+        await context.SaveChangesAsync();
+        Nav.NavigateTo("/produtos");
+    }
+
+    private void Voltar() => Nav.NavigateTo("/produtos");
+}

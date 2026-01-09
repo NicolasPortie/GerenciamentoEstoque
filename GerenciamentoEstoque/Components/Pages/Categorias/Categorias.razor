@@ -1,0 +1,260 @@
+@page "/categorias"
+@using Microsoft.EntityFrameworkCore
+@using GerenciamentoEstoque.Models
+@using GerenciamentoEstoque.Data
+@using Microsoft.AspNetCore.Components.Forms
+@inject IDbContextFactory<AppDbContext> DbFactory
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+
+<div class="space-y-6">
+    <div class="flex items-center justify-between border-b border-gray-200 pb-4 bg-white/50 -mx-6 px-6 -mt-6 pt-6">
+        <div>
+            <h1 class="text-xl font-black text-gray-900 uppercase tracking-tight flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">category</span>
+                Gerenciamento de Categorias
+            </h1>
+            <p class="text-[11px] font-bold text-gray-500 uppercase tracking-widest mt-1">Classificação e Organização de Produtos</p>
+        </div>
+        <button @onclick="AbrirModalNovo" class="bg-primary text-white px-5 py-2.5 rounded text-xs font-black hover:bg-primary-hover transition-all flex items-center gap-2 uppercase tracking-widest active:scale-95">
+            <span class="material-symbols-outlined text-sm">add_box</span>
+            Nova Categoria
+        </button>
+    </div>
+
+    <!-- Tabela -->
+    <div class="bg-white border border-gray-200 shadow-sm">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+                <thead>
+                    <tr class="bg-gray-50 text-gray-600 border-b border-gray-200">
+                        <th class="px-6 py-4 font-black uppercase text-[10px] tracking-wider border-r border-gray-100">Código</th>
+                        <th class="px-6 py-4 font-black uppercase text-[10px] tracking-wider">Descrição / Nome</th>
+                        <th class="px-6 py-4 font-black uppercase text-[10px] tracking-wider text-center">Status</th>
+                        <th class="px-6 py-4 font-black uppercase text-[10px] tracking-wider text-right">Ações</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    @if (categorias == null)
+                    {
+                        @for(int i=0; i<3; i++) {
+                            <tr class="animate-pulse">
+                                <td colspan="4" class="px-6 py-4 bg-gray-50/50"></td>
+                            </tr>
+                        }
+                    }
+                    else if (!categorias.Any())
+                    {
+                        <tr>
+                            <td colspan="4" class="px-6 py-16 text-center">
+                                <span class="material-symbols-outlined text-4xl text-gray-200 mb-2">database_off</span>
+                                <p class="text-gray-400 text-xs font-bold uppercase tracking-widest">Nenhuma categoria localizada</p>
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var cat in categorias)
+                        {
+                            <tr class="hover:bg-blue-50/30 transition-colors group">
+                                <td class="px-6 py-4 text-gray-500 font-mono text-[11px] border-r border-gray-50">#@cat.CategoriaId.ToString("D4")</td>
+                                <td class="px-6 py-4">
+                                    <div class="font-bold text-gray-900 group-hover:text-primary transition-colors uppercase text-[12px]">@cat.Nome</div>
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    @if (cat.Ativo)
+                                    {
+                                        <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-green-50 text-green-700 text-[10px] font-black uppercase border border-green-200">
+                                            Ativo
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-gray-50 text-gray-500 text-[10px] font-black uppercase border border-gray-200">
+                                            Inativo
+                                        </div>
+                                    }
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <div class="flex items-center justify-end gap-1">
+                                        <button @onclick="() => AbrirModalEditar(cat)" class="p-2 text-gray-400 hover:text-primary hover:bg-gray-100 rounded transition-all" title="Editar">
+                                            <span class="material-symbols-outlined text-[18px]">edit_note</span>
+                                        </button>
+                                        <button @onclick="() => AbrirConfirmacaoExcluir(cat)" class="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-all" title="Excluir">
+                                            <span class="material-symbols-outlined text-[18px]">delete_forever</span>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Cadastro/Edição -->
+@if (exibirModal)
+{
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+        <div class="bg-white w-full max-w-md shadow-2xl border border-gray-200">
+            <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                <h3 class="text-sm font-black text-gray-900 uppercase tracking-widest flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">edit_square</span>
+                    @(categoriaEdicao.CategoriaId == 0 ? "Nova Categoria" : "Editar Categoria")
+                </h3>
+                <button @onclick="FecharModal" class="text-gray-400 hover:text-gray-600">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            
+            <EditForm Model="categoriaEdicao" OnValidSubmit="Salvar">
+                <DataAnnotationsValidator />
+                <div class="p-6 space-y-4">
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Nome da Categoria</label>
+                        <InputText @bind-Value="categoriaEdicao.Nome" class="w-full px-4 py-3 bg-gray-100 border-none rounded text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary/20 transition-all outline-none" placeholder="Ex: Higiene, Bebidas..." />
+                        <ValidationMessage For="@(() => categoriaEdicao.Nome)" class="text-rose-600 text-[10px] font-bold uppercase" />
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+                    <button type="button" @onclick="FecharModal" class="px-4 py-2 text-xs font-black text-gray-400 uppercase hover:text-gray-600 transition-colors">Cancelar</button>
+                    <button type="submit" class="bg-primary text-white px-6 py-2 rounded text-xs font-black uppercase tracking-widest hover:bg-primary-hover shadow-lg shadow-primary/20 transition-all active:scale-95">Confirmar</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<!-- Modal de Confirmação de Exclusão -->
+@if (exibirModalExcluir)
+{
+    <div class="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+        <div class="bg-white w-full max-w-sm shadow-2xl border border-gray-200">
+            <div class="p-6 text-center">
+                <div class="w-16 h-16 bg-rose-50 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span class="material-symbols-outlined text-4xl">warning</span>
+                </div>
+                <h3 class="text-sm font-black text-gray-900 uppercase tracking-widest mb-2">Confirmar Exclusão</h3>
+                <p class="text-xs text-gray-500 font-medium leading-relaxed">
+                    Você está prestes a remover permanentemente a categoria <span class="font-bold text-gray-900">"@categoriaParaExcluir?.Nome"</span>. Esta ação não pode ser desfeita.
+                </p>
+                
+                @if (mensagemErroExclusao != null)
+                {
+                    <div class="mt-4 p-3 bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-black uppercase leading-tight">
+                        @mensagemErroExclusao
+                    </div>
+                }
+            </div>
+            
+            <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex flex-col gap-2">
+                <button @onclick="ConfirmarExclusao" class="w-full bg-rose-600 text-white py-3 rounded text-xs font-black uppercase tracking-widest hover:bg-rose-700 transition-all">Excluir Agora</button>
+                <button @onclick="FecharModalExcluir" class="w-full py-2 text-[10px] font-black text-gray-400 uppercase hover:text-gray-600 transition-colors">Cancelar</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<Categoria>? categorias;
+    private bool exibirModal = false;
+    private bool exibirModalExcluir = false;
+    private Categoria categoriaEdicao = new();
+    private Categoria? categoriaParaExcluir;
+    private string? mensagemErroExclusao;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Carregar();
+    }
+
+    private async Task Carregar()
+    {
+        using var context = DbFactory.CreateDbContext();
+        categorias = await context.Categorias.OrderBy(c => c.Nome).ToListAsync();
+    }
+
+    private void AbrirModalNovo()
+    {
+        categoriaEdicao = new Categoria() { Ativo = true };
+        exibirModal = true;
+    }
+
+    private void AbrirModalEditar(Categoria cat)
+    {
+        categoriaEdicao = new Categoria 
+        { 
+            CategoriaId = cat.CategoriaId,
+            Nome = cat.Nome,
+            Ativo = cat.Ativo,
+            DataCadastro = cat.DataCadastro
+        };
+        exibirModal = true;
+    }
+
+    private void FecharModal()
+    {
+        exibirModal = false;
+    }
+
+    private void AbrirConfirmacaoExcluir(Categoria cat)
+    {
+        categoriaParaExcluir = cat;
+        mensagemErroExclusao = null;
+        exibirModalExcluir = true;
+    }
+
+    private void FecharModalExcluir()
+    {
+        exibirModalExcluir = false;
+        categoriaParaExcluir = null;
+    }
+
+    private async Task ConfirmarExclusao()
+    {
+        if (categoriaParaExcluir == null) return;
+
+        using var context = DbFactory.CreateDbContext();
+        
+        var temProdutos = await context.Produtos.AnyAsync(p => p.CategoriaId == categoriaParaExcluir.CategoriaId);
+        if (temProdutos)
+        {
+            mensagemErroExclusao = "Não é possível excluir: existem produtos vinculados a esta categoria.";
+            return;
+        }
+
+        context.Categorias.Remove(categoriaParaExcluir);
+        await context.SaveChangesAsync();
+        
+        exibirModalExcluir = false;
+        await Carregar();
+    }
+
+    private async Task Salvar()
+    {
+        using var context = DbFactory.CreateDbContext();
+
+        categoriaEdicao.Ativo = true;
+
+        if (categoriaEdicao.CategoriaId == 0)
+        {
+            categoriaEdicao.DataCadastro = DateTime.Now;
+            context.Categorias.Add(categoriaEdicao);
+        }
+        else
+        {
+            context.Entry(categoriaEdicao).State = EntityState.Modified;
+        }
+
+        await context.SaveChangesAsync();
+        exibirModal = false;
+        await Carregar();
+    }
+
+    private async Task Excluir(Categoria cat)
+    {
+        AbrirConfirmacaoExcluir(cat);
+    }
+}

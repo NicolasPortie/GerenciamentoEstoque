@@ -5,88 +5,128 @@
 @inject IDbContextFactory<AppDbContext> DbFactory
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
 
-<div class="p-6">
-    <div class="flex items-center justify-between mb-6">
-        <h1 class="text-xl font-bold text-gray-800">Produtos</h1>
-        <button class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm">
-            Novo Produto
-        </button>
+<div class="space-y-6">
+    <div class="flex items-center justify-between border-b border-gray-200 pb-4 bg-white/50 -mx-6 px-6 -mt-6 pt-6">
+        <div>
+            <h1 class="text-xl font-black text-gray-900 uppercase tracking-tight flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">inventory</span>
+                Catálogo de Itens e Materiais
+            </h1>
+            <p class="text-[11px] font-bold text-gray-500 uppercase tracking-widest mt-1">Controle de Estoque e Precificação</p>
+        </div>
+        <a href="/produtos/novo" class="bg-primary text-white px-5 py-2.5 rounded text-xs font-black hover:bg-primary-hover transition-all flex items-center gap-2 uppercase tracking-widest active:scale-95">
+            <span class="material-symbols-outlined text-sm">add_box</span>
+            Lançar Novo Item
+        </a>
     </div>
 
-    <!-- Filtro -->
-    <div class="bg-white p-4 rounded-lg border border-gray-200 mb-4">
-        <input type="text" 
-               placeholder="Buscar produto..." 
-               class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 text-sm"
-               @bind="filtro" @bind:event="oninput" />
+    <!-- Filtro Estilo ERP -->
+    <div class="bg-white border border-gray-200 shadow-sm flex items-stretch">
+        <div class="flex-1 relative">
+            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg">search</span>
+            <input type="text" 
+                   placeholder="Filtrar por nome, código interno ou categoria..." 
+                   class="w-full pl-12 pr-6 py-4 bg-transparent text-sm outline-none font-medium placeholder:text-gray-300"
+                   @bind="filtro" @bind:event="oninput" />
+        </div>
     </div>
 
-    <!-- Tabela -->
-    <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <table class="w-full text-sm">
-            <thead class="bg-gray-50 border-b">
-                <tr>
-                    <th class="px-4 py-3 text-left text-gray-600 font-medium">Produto</th>
-                    <th class="px-4 py-3 text-left text-gray-600 font-medium">Categoria</th>
-                    <th class="px-4 py-3 text-center text-gray-600 font-medium">Estoque</th>
-                    <th class="px-4 py-3 text-right text-gray-600 font-medium">Preco</th>
-                    <th class="px-4 py-3 text-center text-gray-600 font-medium">Status</th>
-                    <th class="px-4 py-3 text-right text-gray-600 font-medium">Acoes</th>
-                </tr>
-            </thead>
-            <tbody>
-                @if (produtosFiltrados == null)
-                {
-                    <tr>
-                        <td colspan="6" class="px-4 py-8 text-center text-gray-500">
-                            Carregando...
-                        </td>
+    <!-- Tabela Estilo ERP Industrial -->
+    <div class="bg-white border border-gray-200 shadow-sm">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+                <thead>
+                    <tr class="bg-gray-50 text-gray-600 border-b border-gray-200">
+                        <th class="px-6 py-4 font-black uppercase text-[10px] tracking-wider border-r border-gray-100">Informações do Produto</th>
+                        <th class="px-6 py-4 font-black uppercase text-[10px] tracking-wider border-r border-gray-100">Classificação</th>
+                        <th class="px-6 py-4 font-black uppercase text-[10px] tracking-wider text-center border-r border-gray-100">Saldo Atual</th>
+                        <th class="px-6 py-4 font-black uppercase text-[10px] tracking-wider text-right border-r border-gray-100">Valor Unitário</th>
+                        <th class="px-6 py-4 font-black uppercase text-[10px] tracking-wider text-center">Estado</th>
+                        <th class="px-6 py-4 font-black uppercase text-[10px] tracking-wider text-right">Controle</th>
                     </tr>
-                }
-                else if (!produtosFiltrados.Any())
-                {
-                    <tr>
-                        <td colspan="6" class="px-4 py-8 text-center text-gray-500">
-                            Nenhum produto encontrado.
-                        </td>
-                    </tr>
-                }
-                else
-                {
-                    @foreach (var prod in produtosFiltrados)
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    @if (produtosFiltrados == null)
                     {
-                        <tr class="border-b hover:bg-gray-50">
-                            <td class="px-4 py-3">
-                                <div class="font-medium text-gray-800">@prod.Nome</div>
-                                <div class="text-xs text-gray-500">@(prod.CodigoInterno ?? "-")</div>
-                            </td>
-                            <td class="px-4 py-3 text-gray-600">@prod.Categoria.Nome</td>
-                            <td class="px-4 py-3 text-center">
-                                @{
-                                    var qtd = prod.Estoque?.QuantidadeAtual ?? 0;
-                                    var min = prod.Estoque?.QuantidadeMinima ?? 0;
-                                }
-                                <span class="@(qtd <= min ? "text-red-600" : "text-gray-800")">@qtd</span>
-                            </td>
-                            <td class="px-4 py-3 text-right text-gray-800">R$ @prod.PrecoVenda.ToString("N2")</td>
-                            <td class="px-4 py-3 text-center">
-                                <span class="@(prod.Ativo ? "text-green-600" : "text-gray-400")">
-                                    @(prod.Ativo ? "Ativo" : "Inativo")
-                                </span>
-                            </td>
-                            <td class="px-4 py-3 text-right">
-                                <button class="text-blue-600 hover:underline text-sm mr-2">Editar</button>
-                                <button class="text-red-600 hover:underline text-sm">Excluir</button>
+                        @for(int i=0; i<5; i++) {
+                            <tr class="animate-pulse">
+                                <td colspan="6" class="px-6 py-6 bg-gray-50/20"></td>
+                            </tr>
+                        }
+                    }
+                    else if (!produtosFiltrados.Any())
+                    {
+                        <tr>
+                            <td colspan="6" class="px-6 py-20 text-center">
+                                <span class="material-symbols-outlined text-5xl text-gray-100 mb-2">inventory_2</span>
+                                <p class="text-gray-400 text-xs font-black uppercase tracking-widest">Nenhum item localizado no catálogo</p>
                             </td>
                         </tr>
                     }
-                }
-            </tbody>
-        </table>
-    </div>
-    
-    <div class="mt-4 text-sm text-gray-500">
-        Total: @(totalProdutos) produtos
+                    else
+                    {
+                        @foreach (var prod in produtosFiltrados)
+                        {
+                            <tr class="hover:bg-blue-50/30 transition-colors group">
+                                <td class="px-6 py-4 border-r border-gray-50">
+                                    <div class="font-black text-gray-900 group-hover:text-primary transition-colors text-[13px] uppercase">@prod.Nome</div>
+                                    <div class="text-[10px] text-gray-400 font-mono mt-0.5 font-bold uppercase">SKU: @(prod.CodigoInterno ?? "---")</div>
+                                </td>
+                                <td class="px-6 py-4 border-r border-gray-50">
+                                    <span class="inline-flex px-2 py-0.5 bg-gray-100 text-gray-600 text-[10px] font-black uppercase tracking-widest border border-gray-200">
+                                        @prod.Categoria.Nome
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-center border-r border-gray-50">
+                                    @{
+                                        var qtd = prod.Estoque?.QuantidadeAtual ?? 0;
+                                        var min = prod.Estoque?.QuantidadeMinima ?? 0;
+                                        var isLow = qtd <= min;
+                                    }
+                                    <div class="flex flex-col items-center">
+                                        <span class="font-mono font-black text-base @(isLow ? "text-rose-600" : "text-gray-800")">
+                                            @qtd.ToString("N0")
+                                        </span>
+                                        <div class="flex items-center gap-1 mt-0.5">
+                                            @if (isLow) { <span class="h-1.5 w-1.5 rounded-full bg-rose-500 animate-ping"></span> }
+                                            <span class="text-[9px] font-bold text-gray-400 uppercase">Min: @min</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 text-right border-r border-gray-50 font-mono">
+                                    <div class="text-[9px] text-gray-400 font-bold uppercase mb-0.5">Venda</div>
+                                    <div class="font-black text-gray-900">@prod.PrecoVenda.ToString("C2")</div>
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    @if (prod.Ativo)
+                                    {
+                                        <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-green-50 text-green-700 text-[10px] font-black uppercase border border-green-200">
+                                            DISPONÍVEL
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-rose-50 text-rose-700 text-[10px] font-black uppercase border border-rose-200">
+                                            BLOQUEADO
+                                        </div>
+                                    }
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <div class="flex items-center justify-end gap-1">
+                                        <a href="/produtos/editar/@prod.ProdutoId" class="p-2 text-gray-400 hover:text-primary hover:bg-gray-100 rounded transition-all" title="Editar Ficha">
+                                            <span class="material-symbols-outlined text-[18px]">edit_note</span>
+                                        </a>
+                                        <button @onclick="() => ExcluirProduto(prod)" class="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-all" title="Remover do Catálogo">
+                                            <span class="material-symbols-outlined text-[18px]">delete_forever</span>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
@@ -94,11 +134,11 @@
     private List<Produto>? produtos;
     private List<Categoria> categorias = new();
     private string filtro = "";
-    private int totalProdutos = 0;
 
     private List<Produto>? produtosFiltrados => produtos?
         .Where(p => string.IsNullOrWhiteSpace(filtro) || 
                    p.Nome.Contains(filtro, StringComparison.OrdinalIgnoreCase) || 
+                   p.ProdutoId.ToString().Contains(filtro) ||
                    (p.CodigoInterno?.Contains(filtro, StringComparison.OrdinalIgnoreCase) ?? false) ||
                    p.Categoria.Nome.Contains(filtro, StringComparison.OrdinalIgnoreCase))
         .ToList();
@@ -119,7 +159,13 @@
             .Include(p => p.Estoque)
             .OrderByDescending(p => p.DataCadastro)
             .ToListAsync();
-            
-        totalProdutos = produtos.Count;
+    }
+
+    private async Task ExcluirProduto(Produto prod)
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Produtos.Remove(prod);
+        await context.SaveChangesAsync();
+        await CarregarDados();
     }
 }
