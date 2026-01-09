@@ -8,9 +8,6 @@ public static class DbInitializer
 {
     public static async Task InitializeAsync(AppDbContext context, IAutenticacaoService authService)
     {
-        // Garante que o banco de dados foi criado
-        // context.Database.EnsureCreated(); // Cuidado se estiver usando Migrations
-
         if (!context.Usuarios.Any())
         {
             var senhaHash = authService.GerarHashSenha("123456");

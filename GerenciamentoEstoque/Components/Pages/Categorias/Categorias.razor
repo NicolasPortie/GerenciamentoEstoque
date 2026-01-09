@@ -1,9 +1,7 @@
 @page "/categorias"
-@using Microsoft.EntityFrameworkCore
 @using GerenciamentoEstoque.Models
-@using GerenciamentoEstoque.Data
-@using Microsoft.AspNetCore.Components.Forms
-@inject IDbContextFactory<AppDbContext> DbFactory
+@using GerenciamentoEstoque.Services
+@inject ICategoriaService CategoriaService
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
 
 <div class="space-y-6">
@@ -172,8 +170,7 @@
 
     private async Task Carregar()
     {
-        using var context = DbFactory.CreateDbContext();
-        categorias = await context.Categorias.OrderBy(c => c.Nome).ToListAsync();
+        categorias = await CategoriaService.ObterTodasAsync();
     }
 
     private void AbrirModalNovo()
@@ -216,17 +213,14 @@
     {
         if (categoriaParaExcluir == null) return;
 
-        using var context = DbFactory.CreateDbContext();
-        
-        var temProdutos = await context.Produtos.AnyAsync(p => p.CategoriaId == categoriaParaExcluir.CategoriaId);
+        var temProdutos = await CategoriaService.PossuiProdutosVinculadosAsync(categoriaParaExcluir.CategoriaId);
         if (temProdutos)
         {
             mensagemErroExclusao = "Não é possível excluir: existem produtos vinculados a esta categoria.";
             return;
         }
 
-        context.Categorias.Remove(categoriaParaExcluir);
-        await context.SaveChangesAsync();
+        await CategoriaService.ExcluirAsync(categoriaParaExcluir.CategoriaId);
         
         exibirModalExcluir = false;
         await Carregar();
@@ -234,26 +228,20 @@
 
     private async Task Salvar()
     {
-        using var context = DbFactory.CreateDbContext();
-
-        categoriaEdicao.Ativo = true;
-
         if (categoriaEdicao.CategoriaId == 0)
         {
-            categoriaEdicao.DataCadastro = DateTime.Now;
-            context.Categorias.Add(categoriaEdicao);
+            await CategoriaService.CriarAsync(categoriaEdicao);
         }
         else
         {
-            context.Entry(categoriaEdicao).State = EntityState.Modified;
+            await CategoriaService.AtualizarAsync(categoriaEdicao);
         }
 
-        await context.SaveChangesAsync();
         exibirModal = false;
         await Carregar();
     }
 
-    private async Task Excluir(Categoria cat)
+    private void Excluir(Categoria cat)
     {
         AbrirConfirmacaoExcluir(cat);
     }

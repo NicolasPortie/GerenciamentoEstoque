@@ -34,7 +34,6 @@ public class AutenticacaoService : IAutenticacaoService
 
         var senhaHashInput = GerarHashSenha(senha);
 
-        // Comparação segura de hash
         if (senhaHashInput == usuario.SenhaHash)
         {
             return usuario;

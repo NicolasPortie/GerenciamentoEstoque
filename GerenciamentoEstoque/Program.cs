@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Adicionar suporte a Controllers (necessário para o ContaController)
 builder.Services.AddControllers();
 
 builder.Services.AddRazorComponents()
@@ -15,13 +14,14 @@ builder.Services.AddRazorComponents()
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Registro do DbContext como Scoped (útil para Controllers e outros serviços Scoped)
 builder.Services.AddScoped(sp => sp.GetRequiredService<IDbContextFactory<AppDbContext>>().CreateDbContext());
 
-// Registro de Serviços da Aplicação
 builder.Services.AddScoped<IAutenticacaoService, AutenticacaoService>();
+builder.Services.AddScoped<ICategoriaService, CategoriaService>();
+builder.Services.AddScoped<IMarcaService, MarcaService>();
+builder.Services.AddScoped<IUnidadeMedidaService, UnidadeMedidaService>();
+builder.Services.AddScoped<IProdutoService, ProdutoService>();
 
-// Configuração de Autenticação
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
@@ -48,13 +48,11 @@ app.UseAuthorization();
 
 app.UseAntiforgery();
 
-// Mapear Controllers
 app.MapControllers();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
-// Inicialização de Dados (Seed)
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -62,7 +60,6 @@ using (var scope = app.Services.CreateScope())
     {
         var context = services.GetRequiredService<AppDbContext>();
         var authService = services.GetRequiredService<IAutenticacaoService>();
-        // context.Database.Migrate(); // Descomentar se estiver usando migrations para criar/atualizar o banco
         await DbInitializer.InitializeAsync(context, authService);
     }
     catch (Exception ex)

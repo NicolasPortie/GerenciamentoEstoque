@@ -1,10 +1,9 @@
 @page "/categorias/novo"
 @page "/categorias/editar/{Id:int}"
-@using Microsoft.EntityFrameworkCore
 @using GerenciamentoEstoque.Models
-@using GerenciamentoEstoque.Data
+@using GerenciamentoEstoque.Services
 @using Microsoft.AspNetCore.Components.Forms
-@inject IDbContextFactory<AppDbContext> DbFactory
+@inject ICategoriaService CategoriaService
 @inject NavigationManager Nav
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
 
@@ -67,8 +66,7 @@
     {
         if (Id != 0)
         {
-            using var context = DbFactory.CreateDbContext();
-            var c = await context.Categorias.FindAsync(Id);
+            var c = await CategoriaService.ObterPorIdAsync(Id);
             if (c != null)
             {
                 categoria = c;
@@ -83,21 +81,15 @@
 
     private async Task Salvar()
     {
-        using var context = DbFactory.CreateDbContext();
-
-        categoria.Ativo = true;
-
         if (Id == 0)
         {
-            categoria.DataCadastro = DateTime.Now;
-            context.Categorias.Add(categoria);
+            await CategoriaService.CriarAsync(categoria);
         }
         else
         {
-            context.Categorias.Update(categoria);
+            await CategoriaService.AtualizarAsync(categoria);
         }
 
-        await context.SaveChangesAsync();
         Nav.NavigateTo("/categorias");
     }
 

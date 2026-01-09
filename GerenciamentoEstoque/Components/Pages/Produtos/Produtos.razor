@@ -1,8 +1,8 @@
 @page "/produtos"
-@using Microsoft.EntityFrameworkCore
 @using GerenciamentoEstoque.Models
-@using GerenciamentoEstoque.Data
-@inject IDbContextFactory<AppDbContext> DbFactory
+@using GerenciamentoEstoque.Services
+@inject IProdutoService ProdutoService
+@inject ICategoriaService CategoriaService
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
 
 <div class="space-y-6">
@@ -150,22 +150,13 @@
 
     private async Task CarregarDados()
     {
-        using var context = DbFactory.CreateDbContext();
-        
-        categorias = await context.Categorias.Where(c => c.Ativo).OrderBy(c => c.Nome).ToListAsync();
-        
-        produtos = await context.Produtos
-            .Include(p => p.Categoria)
-            .Include(p => p.Estoque)
-            .OrderByDescending(p => p.DataCadastro)
-            .ToListAsync();
+        categorias = await CategoriaService.ObterAtivasAsync();
+        produtos = await ProdutoService.ObterTodosComDetalhesAsync();
     }
 
     private async Task ExcluirProduto(Produto prod)
     {
-        using var context = DbFactory.CreateDbContext();
-        context.Produtos.Remove(prod);
-        await context.SaveChangesAsync();
+        await ProdutoService.ExcluirAsync(prod.ProdutoId);
         await CarregarDados();
     }
 }

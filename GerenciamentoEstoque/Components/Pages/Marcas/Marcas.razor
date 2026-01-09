@@ -1,9 +1,7 @@
 @page "/marcas"
-@using Microsoft.EntityFrameworkCore
 @using GerenciamentoEstoque.Models
-@using GerenciamentoEstoque.Data
-@using Microsoft.AspNetCore.Components.Forms
-@inject IDbContextFactory<AppDbContext> DbFactory
+@using GerenciamentoEstoque.Services
+@inject IMarcaService MarcaService
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
 
 <div class="space-y-6">
@@ -170,8 +168,7 @@
 
     private async Task Carregar()
     {
-        using var context = DbFactory.CreateDbContext();
-        marcas = await context.Marcas.OrderBy(m => m.Nome).ToListAsync();
+        marcas = await MarcaService.ObterTodasAsync();
     }
 
     private void AbrirModalNovo()
@@ -214,17 +211,14 @@
     {
         if (marcaParaExcluir == null) return;
 
-        using var context = DbFactory.CreateDbContext();
-
-        var temProdutos = await context.Produtos.AnyAsync(p => p.MarcaId == marcaParaExcluir.MarcaId);
+        var temProdutos = await MarcaService.PossuiProdutosVinculadosAsync(marcaParaExcluir.MarcaId);
         if (temProdutos)
         {
             mensagemErroExclusao = "Não é possível excluir: existem produtos vinculados a esta marca.";
             return;
         }
 
-        context.Marcas.Remove(marcaParaExcluir);
-        await context.SaveChangesAsync();
+        await MarcaService.ExcluirAsync(marcaParaExcluir.MarcaId);
 
         exibirModalExcluir = false;
         await Carregar();
@@ -232,21 +226,15 @@
 
     private async Task Salvar()
     {
-        using var context = DbFactory.CreateDbContext();
-
-        marcaEdicao.Ativo = true;
-
         if (marcaEdicao.MarcaId == 0)
         {
-            marcaEdicao.DataCadastro = DateTime.Now;
-            context.Marcas.Add(marcaEdicao);
+            await MarcaService.CriarAsync(marcaEdicao);
         }
         else
         {
-            context.Entry(marcaEdicao).State = EntityState.Modified;
+            await MarcaService.AtualizarAsync(marcaEdicao);
         }
 
-        await context.SaveChangesAsync();
         exibirModal = false;
         await Carregar();
     }

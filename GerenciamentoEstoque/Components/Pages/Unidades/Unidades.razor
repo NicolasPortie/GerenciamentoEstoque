@@ -1,9 +1,7 @@
 @page "/unidades"
-@using Microsoft.EntityFrameworkCore
 @using GerenciamentoEstoque.Models
-@using GerenciamentoEstoque.Data
-@using Microsoft.AspNetCore.Components.Forms
-@inject IDbContextFactory<AppDbContext> DbFactory
+@using GerenciamentoEstoque.Services
+@inject IUnidadeMedidaService UnidadeMedidaService
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
 
 <div class="space-y-6">
@@ -181,8 +179,7 @@
 
     private async Task Carregar()
     {
-        using var context = DbFactory.CreateDbContext();
-        unidades = await context.UnidadesMedida.OrderBy(u => u.Nome).ToListAsync();
+        unidades = await UnidadeMedidaService.ObterTodasAsync();
     }
 
     private void AbrirModalNovo()
@@ -226,17 +223,14 @@
     {
         if (unidadeParaExcluir == null) return;
 
-        using var context = DbFactory.CreateDbContext();
-
-        var temProdutos = await context.Produtos.AnyAsync(p => p.UnidadeMedidaId == unidadeParaExcluir.UnidadeMedidaId);
+        var temProdutos = await UnidadeMedidaService.PossuiProdutosVinculadosAsync(unidadeParaExcluir.UnidadeMedidaId);
         if (temProdutos)
         {
             mensagemErroExclusao = "Não é possível excluir: existem produtos vinculados a esta unidade.";
             return;
         }
 
-        context.UnidadesMedida.Remove(unidadeParaExcluir);
-        await context.SaveChangesAsync();
+        await UnidadeMedidaService.ExcluirAsync(unidadeParaExcluir.UnidadeMedidaId);
 
         exibirModalExcluir = false;
         await Carregar();
@@ -244,23 +238,15 @@
 
     private async Task Salvar()
     {
-        using var context = DbFactory.CreateDbContext();
-
-        unidadeEdicao.Ativo = true;
-
         if (unidadeEdicao.UnidadeMedidaId == 0)
         {
-            unidadeEdicao.DataCadastro = DateTime.Now;
-            unidadeEdicao.Sigla = (unidadeEdicao.Sigla ?? string.Empty).Trim().ToUpperInvariant();
-            context.UnidadesMedida.Add(unidadeEdicao);
+            await UnidadeMedidaService.CriarAsync(unidadeEdicao);
         }
         else
         {
-            unidadeEdicao.Sigla = (unidadeEdicao.Sigla ?? string.Empty).Trim().ToUpperInvariant();
-            context.Entry(unidadeEdicao).State = EntityState.Modified;
+            await UnidadeMedidaService.AtualizarAsync(unidadeEdicao);
         }
 
-        await context.SaveChangesAsync();
         exibirModal = false;
         await Carregar();
     }
